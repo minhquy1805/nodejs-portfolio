@@ -9,6 +9,14 @@ const emailSchema = Joi.object({
     description: Joi.string().max(500).optional()
 });
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+
 async function handleAddEmail(req, res) {
     const {error} = emailSchema.validate(req.body);
     if(error){
@@ -17,6 +25,25 @@ async function handleAddEmail(req, res) {
 
     try {
         const result = await addEmail(req.body);
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: process.env.NOTIFICATION_EMAIL,
+            subject: 'New Email Added Notification',
+            text: `A new email has been added with the following details:\n
+                   Name: ${req.body.name}\n
+                   Email: ${req.body.email}\n
+                   Subject: ${req.body.subject}\n
+                   Budget: ${req.body.budget}\n
+                   Description: ${req.body.description || 'N/A'}`,
+            html: `<h2>New Email Request</h2>
+                   <p><strong>Name:</strong> ${req.body.name}</p>
+                   <p><strong>Email:</strong> ${req.body.email}</p>
+                   <p><strong>Subject:</strong> ${req.body.subject}</p>
+                   <p><strong>Budget:</strong> ${req.body.budget}</p>
+                   <p><strong>Description:</strong> ${req.body.description || 'N/A'}</p>`
+        };
+        await transporter.sendMail(mailOptions);
+
         res.status(201).json(result);
     } catch (error) {
         res.status(400).json({error: error.message});
