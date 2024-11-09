@@ -1,5 +1,6 @@
 const {addEmail, listEmails, getEmail, removeEmail} = require('../services/emailService');  
 const Joi  = require('joi');
+const nodemailer = require('nodemailer');
 
 const emailSchema = Joi.object({
     name: Joi.string().min(3).max(30).required(),
